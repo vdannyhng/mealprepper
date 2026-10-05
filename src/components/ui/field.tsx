@@ -2,7 +2,7 @@
 
 import { useId, type ComponentProps, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import { Input, Label, Select } from "./input";
+import { Input, Label, Select, Textarea } from "./input";
 
 interface FieldShellProps {
   id: string;
@@ -108,6 +108,34 @@ export function SelectField({
       >
         {children}
       </Select>
+    </FieldShell>
+  );
+}
+
+type TextareaFieldProps = ComponentProps<"textarea"> & {
+  label: string;
+  hint?: ReactNode;
+  errors?: string[];
+};
+
+export function TextareaField({
+  label,
+  hint,
+  errors,
+  className,
+  id,
+  ...props
+}: TextareaFieldProps) {
+  const generatedId = useId();
+  const textareaId = id ?? generatedId;
+  return (
+    <FieldShell id={textareaId} label={label} hint={hint} errors={errors} className={className}>
+      <Textarea
+        id={textareaId}
+        aria-invalid={errors?.length ? true : undefined}
+        aria-describedby={describedBy(textareaId, hint, errors)}
+        {...props}
+      />
     </FieldShell>
   );
 }

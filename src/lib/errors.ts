@@ -16,6 +16,7 @@ const POSTGRES_MESSAGES: Record<string, string> = {
   "23502": "Es fehlen Pflichtangaben.",
   "22P02": "Ein Wert hat ein ungültiges Format.",
   "42501": "Dafür fehlt dir die Berechtigung. Bitte melde dich erneut an.",
+  P0002: "Der Eintrag wurde nicht gefunden.",
   PGRST116: "Der Eintrag wurde nicht gefunden.",
   PGRST301: "Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.",
 };
@@ -36,10 +37,19 @@ const AUTH_MESSAGES: Record<string, string> = {
 
 export const GENERIC_ERROR = "Etwas ist schiefgelaufen. Bitte versuche es erneut.";
 
-export function toUserMessage(error: unknown, fallback = GENERIC_ERROR): string {
+/**
+ * @param overrides context-specific messages per error code, e.g.
+ *   { "23505": "Dieses Lebensmittel existiert bereits." }
+ */
+export function toUserMessage(
+  error: unknown,
+  fallback = GENERIC_ERROR,
+  overrides: Record<string, string> = {},
+): string {
   if (!error || typeof error !== "object") return fallback;
   const { code, message } = error as ErrorLike;
 
+  if (code && overrides[code]) return overrides[code];
   if (code && POSTGRES_MESSAGES[code]) return POSTGRES_MESSAGES[code];
   if (code && AUTH_MESSAGES[code]) return AUTH_MESSAGES[code];
   if (message && /fetch failed|network/i.test(message)) {

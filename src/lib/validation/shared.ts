@@ -36,6 +36,26 @@ export function optionalNumber(label: string, opts: NumberOptions) {
   return z.preprocess(toNumberOrUndefined, numberSchema(label, opts).optional());
 }
 
+/** Optional free text: "" and whitespace-only become undefined. */
+export function optionalText(max: number) {
+  return z.preprocess(
+    (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
+    z.string().trim().max(max, `Maximal ${max} Zeichen.`).optional(),
+  );
+}
+
+/** Optional select value: "" becomes undefined. */
+export function optionalEnum<T extends readonly [string, ...string[]]>(values: T) {
+  return z.preprocess((v) => (v === "" ? undefined : v), z.enum(values).optional());
+}
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Route params are user input – check the format before querying. */
+export function isUuid(value: string): boolean {
+  return UUID_PATTERN.test(value);
+}
+
 /** Field errors keyed by field path ("targets.calories"), ready for forms. */
 export type FieldErrors = Record<string, string[] | undefined>;
 

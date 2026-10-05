@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(14);
+select plan(19);
 
 insert into auth.users (id, email, raw_user_meta_data) values
   ('11111111-1111-1111-1111-111111111111', 'anna@example.test', '{"display_name": "Anna"}'),
@@ -57,10 +57,50 @@ select is(
   'global foods cannot be modified'
 );
 
+select lives_ok(
+  $$ select public.save_recipe(
+       '{"name": "Test Bowl", "category": "lunch", "servings": 2, "tags": ["meal_prep"],
+         "instructions": ["Kochen"]}'::jsonb,
+       jsonb_build_array(jsonb_build_object(
+         'food_item_id', (select id from public.food_items where name = 'Hähnchenbrust' and user_id is null),
+         'amount', 400, 'unit', 'g'))) $$,
+  'save_recipe creates a recipe with ingredients'
+);
+select is(
+  (select count(*)::int from public.recipe_ingredients ri
+     join public.recipes r on r.id = ri.recipe_id where r.name = 'Test Bowl'),
+  1,
+  'ingredients are stored with the recipe'
+);
+select throws_ok(
+  $$ select public.save_recipe('{"name": "X", "category": "lunch", "servings": 1}'::jsonb,
+       '[{"food_item_id": "00000000-0000-0000-0000-000000000000", "amount": 1, "unit": "g"}]'::jsonb) $$,
+  '23503',
+  null,
+  'save_recipe rejects unknown foods'
+);
+select ok(
+  set_config('test.recipe_id', (select id::text from public.recipes where name = 'Test Bowl'), true) is not null,
+  'own recipe is visible to its owner'
+);
+
 -- Act as Ben
 set local request.jwt.claims = '{"sub": "22222222-2222-2222-2222-222222222222", "role": "authenticated"}';
 
 select is((select count(*)::int from public.macro_targets), 0, 'other users cannot see foreign targets');
+
+select throws_ok(
+  format(
+    $$ select public.save_recipe('{"name": "Hijack", "category": "lunch", "servings": 1}'::jsonb,
+         jsonb_build_array(jsonb_build_object(
+           'food_item_id', (select id from public.food_items where name = 'Basmatireis' and user_id is null),
+           'amount', 1, 'unit', 'g')),
+         %L::uuid) $$,
+    current_setting('test.recipe_id')),
+  'P0002',
+  null,
+  'cannot overwrite another user''s recipe'
+);
 
 select throws_ok(
   $$ insert into storage.objects (bucket_id, name)

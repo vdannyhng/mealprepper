@@ -98,6 +98,7 @@ Bestätigungs-Mails landen lokal in Inbucket: http://127.0.0.1:54324
 | `20261005000002_storage.sql`          | Private Buckets `meal-prep-photos`, `recipe-images`, `avatars`    |
 | `20261005000003_global_catalog.sql`   | 31 globale Lebensmittel + 10 Beispielrezepte (inkl. Zutaten)      |
 | `20261005000004_account_deletion.sql` | `delete_own_account`-RPC (Konto löschen, Recht auf Löschung)      |
+| `20261005000005_save_recipe.sql`      | `save_recipe`-RPC: Rezept + Zutaten atomar speichern              |
 
 ### Seed-Daten
 
@@ -118,10 +119,10 @@ npm run check        # typecheck + lint + test
 
 ## Testing
 
-- **Unit-Tests** (`src/**/*.test.ts`): Makroberechnung, Toleranzen, Empfehlungen, ISO-Wochenlogik,
+- **Unit-Tests** (`src/**/*.test.ts`): Makroberechnung, Rezept-Nährwerte & Skalierung, Einheiten-Umrechnung, Toleranzen, Empfehlungen, ISO-Wochenlogik,
   Fehler-Mapping, Onboarding-Validierung.
 - **DB-Tests** (`supabase/tests/*.test.sql`): RLS-Isolation zwischen Nutzern, Storage-Policies,
-  Signup-Trigger, Onboarding-RPC, Kontolöschung. Laufen auch automatisch in der CI.
+  Signup-Trigger, Onboarding-RPC, Rezept-Speicherung, Kontolöschung. Laufen auch automatisch in der CI.
 - **E2E** (Playwright): geplant für den vollständigen MVP-Flow.
 
 ## Deployment

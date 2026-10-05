@@ -1,4 +1,5 @@
 import {
+  Apple,
   BookOpen,
   CalendarDays,
   ChartColumn,
@@ -25,6 +26,7 @@ export const MAIN_NAV: NavItem[] = [
   { href: "/woche", label: "Wochenplan", icon: CalendarDays },
   { href: "/meal-prep", label: "Meal Prep", icon: ChefHat },
   { href: "/rezepte", label: "Rezepte", icon: BookOpen },
+  { href: "/lebensmittel", label: "Lebensmittel", icon: Apple },
   { href: "/einkaufsliste", label: "Einkaufsliste", icon: ShoppingCart },
   { href: "/pantry", label: "Pantry", icon: Package },
   { href: "/statistiken", label: "Statistiken", icon: ChartColumn },

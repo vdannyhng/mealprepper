@@ -1,11 +1,8 @@
 import { z } from "zod";
 import { Constants } from "@/types/database";
-import { optionalNumber } from "./shared";
+import { optionalEnum, optionalNumber } from "./shared";
 
 const enums = Constants.public.Enums;
-
-const optionalEnum = <T extends readonly [string, ...string[]]>(values: T) =>
-  z.preprocess((v) => (v === "" ? undefined : v), z.enum(values).optional());
 
 export const profileSchema = z.object({
   displayName: z.string().trim().min(1, "Name ist erforderlich.").max(80, "Maximal 80 Zeichen."),

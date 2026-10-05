@@ -815,6 +815,10 @@ export type Database = {
         Args: Record<PropertyKey, never>;
         Returns: undefined;
       };
+      save_recipe: {
+        Args: { p_recipe: Json; p_ingredients: Json; p_recipe_id?: string };
+        Returns: string;
+      };
       complete_onboarding: {
         Args: {
           p_goal: Database["public"]["Enums"]["goal_type"];

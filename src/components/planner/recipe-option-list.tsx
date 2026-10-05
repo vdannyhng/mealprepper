@@ -31,11 +31,7 @@ export function RecipeOptionContent({ recipe }: { recipe: RecipeOption }) {
 }
 
 /** Searchable, category-filtered recipe list shared by the library and the picker dialog. */
-export function RecipeOptionList({
-  recipes,
-  renderItem,
-  className,
-}: RecipeOptionListProps) {
+export function RecipeOptionList({ recipes, renderItem, className }: RecipeOptionListProps) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<Category | null>(null);
   const q = query.trim().toLowerCase();

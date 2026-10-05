@@ -459,6 +459,8 @@ export type Database = {
           completed_at: string | null;
           planned_portions: number | null;
           completed_portions: number | null;
+          covers_to: string | null;
+          estimated_minutes: number | null;
           duration_minutes: number | null;
           notes: string | null;
           proof_photo_url: string | null;
@@ -474,6 +476,8 @@ export type Database = {
           completed_at?: string | null;
           planned_portions?: number | null;
           completed_portions?: number | null;
+          covers_to?: string | null;
+          estimated_minutes?: number | null;
           duration_minutes?: number | null;
           notes?: string | null;
           proof_photo_url?: string | null;
@@ -489,6 +493,8 @@ export type Database = {
           completed_at?: string | null;
           planned_portions?: number | null;
           completed_portions?: number | null;
+          covers_to?: string | null;
+          estimated_minutes?: number | null;
           duration_minutes?: number | null;
           notes?: string | null;
           proof_photo_url?: string | null;
@@ -813,6 +819,26 @@ export type Database = {
     Functions: {
       delete_own_account: {
         Args: Record<PropertyKey, never>;
+        Returns: undefined;
+      };
+      create_prep_session: {
+        Args: {
+          p_date: string;
+          p_covers_to: string;
+          p_recipes: Json;
+          p_tasks: Json;
+          p_estimated_minutes: number;
+        };
+        Returns: string;
+      };
+      complete_prep_session: {
+        Args: {
+          p_session_id: string;
+          p_completed_portions: number;
+          p_duration_minutes: number | null;
+          p_notes: string | null;
+          p_photo_path: string | null;
+        };
         Returns: undefined;
       };
       copy_planned_day: {

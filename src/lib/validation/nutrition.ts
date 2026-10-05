@@ -53,3 +53,12 @@ export const onboardingSchema = z.object({
   dislikedFoods: foodNameList,
 });
 export type OnboardingInput = z.infer<typeof onboardingSchema>;
+
+export const planningPreferencesSchema = z.object({
+  prepWeekdays: z
+    .array(z.coerce.number().int().min(1).max(7))
+    .min(1, "Wähle mindestens einen Meal-Prep-Tag.")
+    .max(7),
+  mealsPerDay: requiredNumber("Hauptmahlzeiten", { min: 1, max: 6, int: true }),
+  snacksPerDay: requiredNumber("Snacks", { min: 0, max: 4, int: true }),
+});

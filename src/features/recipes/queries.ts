@@ -54,6 +54,26 @@ export async function listRecipes(userId: string, filter: RecipeFilter): Promise
   }));
 }
 
+/** Compact recipe data for pickers (planner library, meal replacement). */
+export interface RecipeOption {
+  id: string;
+  name: string;
+  category: Tables<"recipes">["category"];
+  isOwn: boolean;
+  perServing: Nutrients;
+}
+
+export async function listRecipeOptions(userId: string): Promise<RecipeOption[]> {
+  const recipes = await listRecipes(userId, { scope: "all" });
+  return recipes.map(({ id, name, category, isOwn, perServing }) => ({
+    id,
+    name,
+    category,
+    isOwn,
+    perServing,
+  }));
+}
+
 export interface RecipeIngredient {
   id: string;
   amount: number;

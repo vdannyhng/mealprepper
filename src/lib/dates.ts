@@ -98,3 +98,26 @@ export function isIsoDate(value: unknown): value is IsoDate {
   if (typeof value !== "string" || !ISO_DATE.test(value)) return false;
   return fromUtcDate(toUtcDate(value)) === value;
 }
+
+const dateTime = new Intl.DateTimeFormat("de-CH", {
+  weekday: "short",
+  day: "numeric",
+  month: "short",
+  hour: "2-digit",
+  minute: "2-digit",
+  timeZone: APP_TIME_ZONE,
+});
+
+/** "So., 4. Okt., 14:30" in the app timezone. Use on the server only (ICU differs per runtime). */
+export function formatDateTime(iso: string): string {
+  return dateTime.format(new Date(iso));
+}
+
+/** "Heute", "Morgen" or the long date. */
+export function relativeDayLabel(today: IsoDate, date: IsoDate): string {
+  const diff = daysBetween(today, date);
+  if (diff === 0) return "Heute";
+  if (diff === 1) return "Morgen";
+  if (diff === -1) return "Gestern";
+  return formatLongDate(date);
+}

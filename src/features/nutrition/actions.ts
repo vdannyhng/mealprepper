@@ -5,7 +5,11 @@ import { requireUser } from "@/features/auth/session";
 import { actionError, actionSuccess, type ActionState } from "@/lib/action-state";
 import { toUserMessage } from "@/lib/errors";
 import { createClient } from "@/lib/supabase/server";
-import { macroTargetSchema, toleranceSchema } from "@/lib/validation/nutrition";
+import {
+  macroTargetSchema,
+  planningPreferencesSchema,
+  toleranceSchema,
+} from "@/lib/validation/nutrition";
 import { toFieldErrors } from "@/lib/validation/shared";
 
 export async function saveDefaultMacroTarget(
@@ -60,4 +64,33 @@ export async function saveTolerances(_prev: ActionState, formData: FormData): Pr
 
   revalidatePath("/", "layout");
   return actionSuccess("Toleranzen gespeichert.");
+}
+
+export async function savePlanningPreferences(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const user = await requireUser();
+  const parsed = planningPreferencesSchema.safeParse({
+    prepWeekdays: formData.getAll("prepWeekdays"),
+    mealsPerDay: formData.get("mealsPerDay"),
+    snacksPerDay: formData.get("snacksPerDay"),
+  });
+  if (!parsed.success) {
+    return actionError("Bitte überprüfe deine Eingaben.", toFieldErrors(parsed.error));
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("user_preferences")
+    .update({
+      prep_weekdays: [...new Set(parsed.data.prepWeekdays)].sort((a, b) => a - b),
+      meals_per_day: parsed.data.mealsPerDay,
+      snacks_per_day: parsed.data.snacksPerDay,
+    })
+    .eq("user_id", user.id);
+  if (error) return actionError(toUserMessage(error));
+
+  revalidatePath("/", "layout");
+  return actionSuccess("Planung gespeichert.");
 }

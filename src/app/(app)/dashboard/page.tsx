@@ -1,4 +1,4 @@
-import { CalendarDays, ChefHat, Flame, UtensilsCrossed } from "lucide-react";
+import { CalendarDays, ChefHat, Flame, ListChecks, UtensilsCrossed } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
@@ -13,30 +13,40 @@ import {
   toMacros,
   toTolerances,
 } from "@/features/nutrition/queries";
-import { getPlannedMeals } from "@/features/planning/queries";
+import { getCompletedSessionDates, listSessions } from "@/features/meal-prep/queries";
+import { getPlannedMeals, getWeekMeals } from "@/features/planning/queries";
 import { getProfile } from "@/features/profile/queries";
-import { daysBetween, formatLongDate, nextDateOnWeekdays, todayIsoDate } from "@/lib/dates";
+import { getDayLogsSince } from "@/features/today/queries";
+import {
+  addDays,
+  formatLongDate,
+  nextDateOnWeekdays,
+  relativeDayLabel,
+  startOfIsoWeek,
+  todayIsoDate,
+} from "@/lib/dates";
+import { PREP_STATUS_LABELS } from "@/lib/meal-prep/labels";
+import { mealPrepStreak, nutritionStreak } from "@/lib/meal-prep/streaks";
 import { formatGrams, formatKcal } from "@/lib/nutrition/format";
 import { MACRO_KEYS } from "@/lib/nutrition/macros";
 import { SLOT_LABELS, SLOT_ORDER, dayNutrients, mealNutrients } from "@/lib/planning/week";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
-function relativeDayLabel(days: number): string {
-  if (days === 0) return "Heute";
-  if (days === 1) return "Morgen";
-  return `In ${days} Tagen`;
-}
-
 export default async function DashboardPage() {
   const user = await requireUser();
   const today = todayIsoDate();
-  const [profile, target, prefs, todaysMeals] = await Promise.all([
-    getProfile(user.id),
-    getDefaultMacroTarget(user.id),
-    getUserPreferences(user.id),
-    getPlannedMeals(today, today),
-  ]);
+  const [profile, target, prefs, todaysMeals, weekMeals, sessions, completedDates, dayLogs] =
+    await Promise.all([
+      getProfile(user.id),
+      getDefaultMacroTarget(user.id),
+      getUserPreferences(user.id),
+      getPlannedMeals(today, today),
+      getWeekMeals(startOfIsoWeek(today)),
+      listSessions(today, addDays(today, 7)),
+      getCompletedSessionDates(),
+      getDayLogsSince(addDays(today, -400)),
+    ]);
 
   const nextPrep = nextDateOnWeekdays(today, prefs?.prep_weekdays ?? []);
   const tolerances = toTolerances(prefs);
@@ -45,6 +55,13 @@ export default async function DashboardPage() {
     .filter((m) => m.status === "planned" || m.status === "prepared")
     .sort((a, b) => SLOT_ORDER.indexOf(a.slot) - SLOT_ORDER.indexOf(b.slot));
   const nextMeal = upcoming[0];
+  const nextSession = nextPrep ? sessions.find((x) => x.date === nextPrep) : undefined;
+  const prepStreak = mealPrepStreak(completedDates, today);
+  const dayStreak = nutritionStreak(dayLogs, today);
+  const weekRelevant = weekMeals.filter((m) => m.status !== "skipped");
+  const weekPrepared = weekRelevant.filter(
+    (m) => m.status === "prepared" || m.status === "eaten",
+  ).length;
 
   return (
     <>
@@ -91,11 +108,19 @@ export default async function DashboardPage() {
           <CardContent>
             {nextPrep ? (
               <div className="grid gap-1">
-                <p className="text-2xl font-bold">
-                  {relativeDayLabel(daysBetween(today, nextPrep))}
-                </p>
+                <p className="text-2xl font-bold">{relativeDayLabel(today, nextPrep)}</p>
                 <p className="text-sm text-muted-foreground">{formatLongDate(nextPrep)}</p>
-                <p className="text-sm text-muted-foreground">Status: noch nicht geplant</p>
+                <p className="text-sm">
+                  {nextSession
+                    ? `${PREP_STATUS_LABELS[nextSession.status]} · ${nextSession.progress} % erledigt`
+                    : "Noch keine Session erstellt"}
+                </p>
+                <Link
+                  href={nextSession ? `/meal-prep/${nextSession.id}` : "/meal-prep"}
+                  className="text-sm font-medium text-primary hover:underline"
+                >
+                  {nextSession ? "Session öffnen" : "Zu Meal Prep"}
+                </Link>
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">Keine Meal-Prep-Tage festgelegt.</p>
@@ -109,10 +134,36 @@ export default async function DashboardPage() {
               <Flame className="size-4 text-primary" aria-hidden /> Streaks
             </CardTitle>
           </CardHeader>
-          <CardContent className="grid gap-1">
-            <p className="text-sm text-muted-foreground">
-              Schliesse deine erste Meal-Prep-Session ab, um deine Streak zu starten.
+          <CardContent className="grid gap-3">
+            <div>
+              <p className="text-2xl font-bold tabular-nums">
+                🔥 {prepStreak.current} {prepStreak.current === 1 ? "Woche" : "Wochen"}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Meal-Prep-Streak · Rekord {prepStreak.longest}
+              </p>
+            </div>
+            <div>
+              <p className="text-lg font-semibold tabular-nums">
+                {dayStreak.current} {dayStreak.current === 1 ? "Tag" : "Tage"} in Folge im
+                Zielbereich
+              </p>
+              <p className="text-sm text-muted-foreground">Rekord {dayStreak.longest}</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ListChecks className="size-4 text-primary" aria-hidden /> Wochenfortschritt
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-2">
+            <p className="text-2xl font-bold tabular-nums">
+              {weekPrepared} / {weekRelevant.length}
             </p>
+            <p className="text-sm text-muted-foreground">Mahlzeiten vorbereitet diese Woche</p>
           </CardContent>
         </Card>
 

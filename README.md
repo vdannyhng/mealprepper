@@ -92,13 +92,15 @@ Bestätigungs-Mails landen lokal in Inbucket: http://127.0.0.1:54324
 
 ### Migrationen
 
-| Datei                                 | Inhalt                                                            |
-| ------------------------------------- | ----------------------------------------------------------------- |
-| `20261005000001_initial_schema.sql`   | Alle MVP-Tabellen, Enums, Trigger, `complete_onboarding`-RPC, RLS |
-| `20261005000002_storage.sql`          | Private Buckets `meal-prep-photos`, `recipe-images`, `avatars`    |
-| `20261005000003_global_catalog.sql`   | 31 globale Lebensmittel + 10 Beispielrezepte (inkl. Zutaten)      |
-| `20261005000004_account_deletion.sql` | `delete_own_account`-RPC (Konto löschen, Recht auf Löschung)      |
-| `20261005000005_save_recipe.sql`      | `save_recipe`-RPC: Rezept + Zutaten atomar speichern              |
+| Datei                                   | Inhalt                                                             |
+| --------------------------------------- | ------------------------------------------------------------------ |
+| `20261005000001_initial_schema.sql`     | Alle MVP-Tabellen, Enums, Trigger, `complete_onboarding`-RPC, RLS  |
+| `20261005000002_storage.sql`            | Private Buckets `meal-prep-photos`, `recipe-images`, `avatars`     |
+| `20261005000003_global_catalog.sql`     | 31 globale Lebensmittel + 10 Beispielrezepte (inkl. Zutaten)       |
+| `20261005000004_account_deletion.sql`   | `delete_own_account`-RPC (Konto löschen, Recht auf Löschung)       |
+| `20261005000005_save_recipe.sql`        | `save_recipe`-RPC: Rezept + Zutaten atomar speichern               |
+| `20261005000006_planner.sql`            | `copy_planned_day`-RPC, RLS: nur sichtbare Rezepte einplanbar      |
+| `20261005000007_meal_prep_sessions.sql` | Meal-Prep-Sessions erstellen/abschliessen (RPCs), Session-Zeitraum |
 
 ### Seed-Daten
 
@@ -119,8 +121,10 @@ npm run check        # typecheck + lint + test
 
 ## Testing
 
-- **Unit-Tests** (`src/**/*.test.ts`): Makroberechnung, Rezept-Nährwerte & Skalierung, Einheiten-Umrechnung, Toleranzen, Empfehlungen, ISO-Wochenlogik,
-  Fehler-Mapping, Onboarding-Validierung.
+- **Unit-Tests** (`src/**/*.test.ts`, `npm run test`): Makro- und Rezeptberechnung, Einheiten,
+  Toleranzen, Empfehlungen, Wochenplan (Tagesmakros, Wochenübersicht, Slots), Drag-and-Drop-Payloads,
+  Heute (gegessen, Fortschritt, Tagesauswertung), Meal-Prep-Sessions (Zeitraum, Kochablauf, Dauer),
+  Streaks (ISO-Wochen, Jahreswechsel), Datums- und Zahlenformatierung, alle Zod-Schemas.
 - **DB-Tests** (`supabase/tests/*.test.sql`): RLS-Isolation zwischen Nutzern, Storage-Policies,
   Signup-Trigger, Onboarding-RPC, Rezept-Speicherung, Kontolöschung. Laufen auch automatisch in der CI.
 - **E2E** (Playwright): geplant für den vollständigen MVP-Flow.

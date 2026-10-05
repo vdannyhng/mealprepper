@@ -10,7 +10,7 @@ import {
   toTolerances,
 } from "@/features/nutrition/queries";
 import { getWeekMeals } from "@/features/planning/queries";
-import { listRecipes } from "@/features/recipes/queries";
+import { listRecipeOptions } from "@/features/recipes/queries";
 import { startOfIsoWeek, todayIsoDate } from "@/lib/dates";
 import { parseWeekStart } from "@/lib/planning/week";
 
@@ -27,7 +27,7 @@ export default async function WeekPage({
 
   const [meals, recipes, target, prefs] = await Promise.all([
     getWeekMeals(weekStart),
-    listRecipes(user.id, { scope: "all" }),
+    listRecipeOptions(user.id),
     getDefaultMacroTarget(user.id),
     getUserPreferences(user.id),
   ]);
@@ -45,13 +45,7 @@ export default async function WeekPage({
         weekStart={weekStart}
         today={today}
         initialMeals={meals}
-        recipes={recipes.map((r) => ({
-          id: r.id,
-          name: r.name,
-          category: r.category,
-          isOwn: r.isOwn,
-          perServing: r.perServing,
-        }))}
+        recipes={recipes}
         target={target ? toMacros(target) : null}
         tolerances={toTolerances(prefs)}
         mealsPerDay={prefs?.meals_per_day ?? 3}

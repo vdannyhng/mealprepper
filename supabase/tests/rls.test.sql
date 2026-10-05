@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(24);
+select plan(30);
 
 insert into auth.users (id, email, raw_user_meta_data) values
   ('11111111-1111-1111-1111-111111111111', 'anna@example.test', '{"display_name": "Anna"}'),
@@ -105,6 +105,47 @@ select throws_ok(
   'days outside the plan week are rejected'
 );
 
+select lives_ok(
+  $$ select public.create_prep_session(
+       '2026-10-04', '2026-10-06',
+       jsonb_build_array(jsonb_build_object(
+         'recipe_id', (select id from public.recipes where name = 'Chicken Rice Bowl' and user_id is null),
+         'servings', 3)),
+       '[{"title": "Reis kochen", "recipe_id": ""}, {"title": "Abfüllen"}]'::jsonb,
+       60::smallint) $$,
+  'create_prep_session creates a session with recipes and tasks'
+);
+select throws_ok(
+  $$ select public.create_prep_session(
+       '2026-10-04', '2026-10-06',
+       jsonb_build_array(jsonb_build_object(
+         'recipe_id', (select id from public.recipes where name = 'Beef Chili' and user_id is null),
+         'servings', 1)),
+       '[]'::jsonb, 10::smallint) $$,
+  '23505',
+  null,
+  'only one active session per prep day'
+);
+select throws_ok(
+  $$ select public.complete_prep_session(
+       (select id from public.meal_prep_sessions), 3::smallint, 90::smallint, null,
+       '22222222-2222-2222-2222-222222222222/foreign.jpg') $$,
+  '42501',
+  null,
+  'proof photos must be in the own storage folder'
+);
+select lives_ok(
+  $$ select public.complete_prep_session(
+       (select id from public.meal_prep_sessions), 3::smallint, 90::smallint, 'Lief gut',
+       '11111111-1111-1111-1111-111111111111/proof.jpg') $$,
+  'complete_prep_session completes the session'
+);
+select is(
+  (select count(*)::int from public.planned_meals where status = 'prepared'),
+  2,
+  'covered planned meals are marked as prepared'
+);
+
 -- Act as Ben
 set local request.jwt.claims = '{"sub": "22222222-2222-2222-2222-222222222222", "role": "authenticated"}';
 
@@ -135,6 +176,11 @@ select throws_ok(
   'cannot plan another user''s private recipe'
 );
 select is((select count(*)::int from public.planned_meals), 0, 'other users cannot see foreign plans');
+select is(
+  (select count(*)::int from public.meal_prep_sessions),
+  0,
+  'other users cannot see foreign prep sessions'
+);
 
 select throws_ok(
   $$ insert into storage.objects (bucket_id, name)

@@ -4,7 +4,9 @@
  * - Page navigations always go to the network; when offline the cached /offline page is shown.
  *   Authenticated HTML and API responses are never cached, so no private data ends up on disk.
  */
-const VERSION = "v1";
+const VERSION = "v2";
+/** Hashed assets of old deployments are dropped beyond this many entries. */
+const STATIC_CACHE_LIMIT = 150;
 const STATIC_CACHE = `mealprepper-static-${VERSION}`;
 const PAGES_CACHE = `mealprepper-pages-${VERSION}`;
 const OFFLINE_URL = "/offline";
@@ -58,9 +60,20 @@ self.addEventListener("fetch", (event) => {
         const cached = await cache.match(request);
         if (cached) return cached;
         const response = await fetch(request);
-        if (response.ok) cache.put(request, response.clone());
+        if (response.ok) {
+          await cache.put(request, response.clone());
+          void trimCache(cache);
+        }
         return response;
       }),
     );
   }
 });
+
+/** Deletes the oldest entries (insertion order) above the limit. */
+async function trimCache(cache) {
+  const keys = await cache.keys();
+  await Promise.all(
+    keys.slice(0, Math.max(0, keys.length - STATIC_CACHE_LIMIT)).map((key) => cache.delete(key)),
+  );
+}

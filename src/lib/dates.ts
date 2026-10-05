@@ -69,26 +69,61 @@ export function daysBetween(from: IsoDate, to: IsoDate): number {
   return Math.round((toUtcDate(to).getTime() - toUtcDate(from).getTime()) / 86_400_000);
 }
 
-const longDate = new Intl.DateTimeFormat("de-CH", {
-  weekday: "long",
-  day: "numeric",
-  month: "long",
-  timeZone: "UTC",
-});
+// German names are spelled out instead of using Intl: Node and browsers ship different ICU
+// data, and dates rendered in Client Components must match between server and browser.
+const WEEKDAY_NAMES = [
+  "Montag",
+  "Dienstag",
+  "Mittwoch",
+  "Donnerstag",
+  "Freitag",
+  "Samstag",
+  "Sonntag",
+];
+const MONTH_NAMES = [
+  "Januar",
+  "Februar",
+  "März",
+  "April",
+  "Mai",
+  "Juni",
+  "Juli",
+  "August",
+  "September",
+  "Oktober",
+  "November",
+  "Dezember",
+];
+const MONTH_SHORT = [
+  "Jan.",
+  "Feb.",
+  "März",
+  "Apr.",
+  "Mai",
+  "Juni",
+  "Juli",
+  "Aug.",
+  "Sept.",
+  "Okt.",
+  "Nov.",
+  "Dez.",
+];
 
-export function formatLongDate(date: IsoDate): string {
-  return longDate.format(toUtcDate(date));
+function dateParts(date: IsoDate) {
+  const d = toUtcDate(date);
+  return { day: d.getUTCDate(), month: d.getUTCMonth(), weekday: isoWeekday(date) };
 }
 
-const shortDate = new Intl.DateTimeFormat("de-CH", {
-  day: "numeric",
-  month: "short",
-  timeZone: "UTC",
-});
+/** "Montag, 5. Oktober" */
+export function formatLongDate(date: IsoDate): string {
+  const { day, month, weekday } = dateParts(date);
+  return `${WEEKDAY_NAMES[weekday - 1]}, ${day}. ${MONTH_NAMES[month]}`;
+}
 
 /** "5. Okt." */
 export function formatShortDate(date: IsoDate): string {
-  return shortDate.format(toUtcDate(date));
+  const { day, month } = dateParts(date);
+  return `${day}. ${MONTH_SHORT[month]}`;
 }
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;

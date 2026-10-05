@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(30);
+select plan(33);
 
 insert into auth.users (id, email, raw_user_meta_data) values
   ('11111111-1111-1111-1111-111111111111', 'anna@example.test', '{"display_name": "Anna"}'),
@@ -200,6 +200,32 @@ select is(
   (select count(*)::int from auth.users where id = '22222222-2222-2222-2222-222222222222'),
   0,
   'account deletion removes the auth user'
+);
+
+-- Regression: deleting a user whose own recipe is planned and uses an own food must succeed.
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "11111111-1111-1111-1111-111111111111", "role": "authenticated"}';
+insert into public.food_items (user_id, name, calories, protein, carbs, fat)
+values ('11111111-1111-1111-1111-111111111111', 'Eigener Shake', 100, 20, 2, 1);
+insert into public.recipe_ingredients (recipe_id, food_item_id, amount, unit)
+select r.id, f.id, 50, 'g'
+from public.recipes r, public.food_items f
+where r.name = 'Test Bowl' and f.name = 'Eigener Shake';
+insert into public.planned_meals (weekly_plan_id, date, meal_type, recipe_id)
+select p.id, '2026-10-08', 'dinner', r.id
+from public.weekly_plans p, public.recipes r
+where r.name = 'Test Bowl';
+select lives_ok(
+  $$ select public.delete_own_account() $$,
+  'a user with own foods, recipes and plans can delete the account'
+);
+-- Deferred foreign keys are verified now instead of at commit (the test rolls back).
+select lives_ok($$ set constraints all immediate $$, 'no dangling references remain');
+reset role;
+select is(
+  (select count(*)::int from public.recipes where user_id is not null),
+  0,
+  'own recipes are deleted with the account'
 );
 
 select * from finish();

@@ -2,9 +2,13 @@ import { describe, expect, it } from "vitest";
 import {
   addDays,
   daysBetween,
+  formatLongDate,
+  formatShortDate,
+  isIsoDate,
   isoWeek,
   isoWeekday,
   nextDateOnWeekdays,
+  relativeDayLabel,
   startOfIsoWeek,
   todayIsoDate,
 } from "./dates";
@@ -53,5 +57,27 @@ describe("todayIsoDate", () => {
     const lateEveningUtc = new Date("2026-10-05T22:30:00Z");
     expect(todayIsoDate("Europe/Zurich", lateEveningUtc)).toBe("2026-10-06");
     expect(todayIsoDate("UTC", lateEveningUtc)).toBe("2026-10-05");
+  });
+});
+
+describe("German date formatting", () => {
+  it("formats long and short dates without depending on ICU data", () => {
+    expect(formatLongDate("2026-10-05")).toBe("Montag, 5. Oktober");
+    expect(formatLongDate("2026-03-01")).toBe("Sonntag, 1. März");
+    expect(formatShortDate("2026-10-11")).toBe("11. Okt.");
+    expect(formatShortDate("2026-09-21")).toBe("21. Sept.");
+  });
+
+  it("labels nearby days relatively", () => {
+    expect(relativeDayLabel("2026-10-05", "2026-10-05")).toBe("Heute");
+    expect(relativeDayLabel("2026-10-05", "2026-10-06")).toBe("Morgen");
+    expect(relativeDayLabel("2026-10-05", "2026-10-04")).toBe("Gestern");
+    expect(relativeDayLabel("2026-10-05", "2026-10-08")).toBe("Donnerstag, 8. Oktober");
+  });
+
+  it("validates ISO dates", () => {
+    expect(isIsoDate("2026-02-28")).toBe(true);
+    expect(isIsoDate("2026-02-30")).toBe(false);
+    expect(isIsoDate("05.10.2026")).toBe(false);
   });
 });

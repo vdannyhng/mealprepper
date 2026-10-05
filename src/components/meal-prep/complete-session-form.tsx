@@ -7,7 +7,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { InputField, TextareaField } from "@/components/ui/field";
 import { completePrepSession } from "@/features/meal-prep/actions";
-import { uploadProofPhoto } from "@/features/meal-prep/photo-upload";
+import { removeProofPhoto, uploadProofPhoto } from "@/features/meal-prep/photo-upload";
 import { PhotoUpload } from "./photo-upload";
 
 interface CompleteSessionFormProps {
@@ -62,6 +62,8 @@ export function CompleteSessionForm({
           photoPath,
         });
         if (!result.ok) {
+          // Do not leave an orphaned photo in storage when the session was not saved.
+          if (photoPath) await removeProofPhoto(photoPath);
           setError(result.message);
           return;
         }

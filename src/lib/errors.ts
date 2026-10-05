@@ -12,6 +12,7 @@ interface ErrorLike {
 const POSTGRES_MESSAGES: Record<string, string> = {
   "23505": "Dieser Eintrag existiert bereits.",
   "23503": "Dieser Eintrag wird noch an anderer Stelle verwendet.",
+  "23001": "Dieser Eintrag wird noch an anderer Stelle verwendet.",
   "23514": "Einige Werte liegen ausserhalb des erlaubten Bereichs.",
   "23502": "Es fehlen Pflichtangaben.",
   "22P02": "Ein Wert hat ein ungültiges Format.",

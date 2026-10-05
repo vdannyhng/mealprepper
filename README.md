@@ -101,6 +101,7 @@ Bestätigungs-Mails landen lokal in Inbucket: http://127.0.0.1:54324
 | `20261005000005_save_recipe.sql`        | `save_recipe`-RPC: Rezept + Zutaten atomar speichern               |
 | `20261005000006_planner.sql`            | `copy_planned_day`-RPC, RLS: nur sichtbare Rezepte einplanbar      |
 | `20261005000007_meal_prep_sessions.sql` | Meal-Prep-Sessions erstellen/abschliessen (RPCs), Session-Zeitraum |
+| `20261005000008_fk_no_action.sql`       | Fix Kontolöschung (aufgeschobene Fremdschlüssel), RLS-Performance  |
 
 ### Seed-Daten
 

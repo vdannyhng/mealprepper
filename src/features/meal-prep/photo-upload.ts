@@ -44,3 +44,11 @@ export async function uploadProofPhoto(
   if (error) throw new Error("Das Foto konnte nicht hochgeladen werden.", { cause: error });
   return path;
 }
+
+/** Removes an uploaded photo again, e.g. when saving the session failed. Best effort. */
+export async function removeProofPhoto(path: string): Promise<void> {
+  await createClient()
+    .storage.from(BUCKET)
+    .remove([path])
+    .catch(() => undefined);
+}

@@ -79,3 +79,22 @@ const longDate = new Intl.DateTimeFormat("de-CH", {
 export function formatLongDate(date: IsoDate): string {
   return longDate.format(toUtcDate(date));
 }
+
+const shortDate = new Intl.DateTimeFormat("de-CH", {
+  day: "numeric",
+  month: "short",
+  timeZone: "UTC",
+});
+
+/** "5. Okt." */
+export function formatShortDate(date: IsoDate): string {
+  return shortDate.format(toUtcDate(date));
+}
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** True for a real calendar date in "YYYY-MM-DD" format. */
+export function isIsoDate(value: unknown): value is IsoDate {
+  if (typeof value !== "string" || !ISO_DATE.test(value)) return false;
+  return fromUtcDate(toUtcDate(value)) === value;
+}

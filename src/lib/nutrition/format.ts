@@ -1,12 +1,11 @@
-const integerFormat = new Intl.NumberFormat("de-CH", { maximumFractionDigits: 0 });
-const decimalFormat = new Intl.NumberFormat("de-CH", { maximumFractionDigits: 1 });
+import { formatNumber } from "@/lib/number-format";
 
 /** Whole kilocalories with Swiss digit grouping. */
 export function formatKcal(value: number): string {
-  return integerFormat.format(value);
+  return formatNumber(value);
 }
 
 /** Grams: whole numbers from 10 g upwards, one decimal below. */
 export function formatGrams(value: number): string {
-  return Math.abs(value) >= 10 ? integerFormat.format(value) : decimalFormat.format(value);
+  return formatNumber(value, Math.abs(value) >= 10 ? 0 : 1);
 }

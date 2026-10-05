@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(19);
+select plan(24);
 
 insert into auth.users (id, email, raw_user_meta_data) values
   ('11111111-1111-1111-1111-111111111111', 'anna@example.test', '{"display_name": "Anna"}'),
@@ -84,6 +84,27 @@ select ok(
   'own recipe is visible to its owner'
 );
 
+insert into public.weekly_plans (user_id, week_start_date)
+values ('11111111-1111-1111-1111-111111111111', '2026-10-05');
+select lives_ok(
+  $$ insert into public.planned_meals (weekly_plan_id, date, meal_type, recipe_id)
+     select p.id, '2026-10-05', 'lunch', r.id
+     from public.weekly_plans p, public.recipes r
+     where r.name = 'Chicken Rice Bowl' and r.user_id is null $$,
+  'a global recipe can be planned'
+);
+select is(
+  public.copy_planned_day('2026-10-05', '2026-10-05', array['2026-10-06', '2026-10-07']::date[]),
+  2,
+  'copy_planned_day copies a day to other days'
+);
+select throws_ok(
+  $$ select public.copy_planned_day('2026-10-05', '2026-10-05', array['2026-10-20']::date[]) $$,
+  '23514',
+  null,
+  'days outside the plan week are rejected'
+);
+
 -- Act as Ben
 set local request.jwt.claims = '{"sub": "22222222-2222-2222-2222-222222222222", "role": "authenticated"}';
 
@@ -101,6 +122,19 @@ select throws_ok(
   null,
   'cannot overwrite another user''s recipe'
 );
+
+insert into public.weekly_plans (user_id, week_start_date)
+values ('22222222-2222-2222-2222-222222222222', '2026-10-05');
+select throws_ok(
+  format(
+    $$ insert into public.planned_meals (weekly_plan_id, date, meal_type, recipe_id)
+       select id, '2026-10-05', 'lunch', %L::uuid from public.weekly_plans $$,
+    current_setting('test.recipe_id')),
+  '42501',
+  null,
+  'cannot plan another user''s private recipe'
+);
+select is((select count(*)::int from public.planned_meals), 0, 'other users cannot see foreign plans');
 
 select throws_ok(
   $$ insert into storage.objects (bucket_id, name)

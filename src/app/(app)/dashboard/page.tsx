@@ -13,9 +13,12 @@ import {
   toMacros,
   toTolerances,
 } from "@/features/nutrition/queries";
+import { getPlannedMeals } from "@/features/planning/queries";
 import { getProfile } from "@/features/profile/queries";
 import { daysBetween, formatLongDate, nextDateOnWeekdays, todayIsoDate } from "@/lib/dates";
-import { MACRO_KEYS, ZERO_MACROS } from "@/lib/nutrition/macros";
+import { formatGrams, formatKcal } from "@/lib/nutrition/format";
+import { MACRO_KEYS } from "@/lib/nutrition/macros";
+import { SLOT_LABELS, SLOT_ORDER, dayNutrients, mealNutrients } from "@/lib/planning/week";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -27,17 +30,21 @@ function relativeDayLabel(days: number): string {
 
 export default async function DashboardPage() {
   const user = await requireUser();
-  const [profile, target, prefs] = await Promise.all([
+  const today = todayIsoDate();
+  const [profile, target, prefs, todaysMeals] = await Promise.all([
     getProfile(user.id),
     getDefaultMacroTarget(user.id),
     getUserPreferences(user.id),
+    getPlannedMeals(today, today),
   ]);
 
-  const today = todayIsoDate();
   const nextPrep = nextDateOnWeekdays(today, prefs?.prep_weekdays ?? []);
   const tolerances = toTolerances(prefs);
-  // Planned values come from the weekly plan once the planner is implemented.
-  const planned = ZERO_MACROS;
+  const planned = dayNutrients(todaysMeals, today);
+  const upcoming = [...todaysMeals]
+    .filter((m) => m.status === "planned" || m.status === "prepared")
+    .sort((a, b) => SLOT_ORDER.indexOf(a.slot) - SLOT_ORDER.indexOf(b.slot));
+  const nextMeal = upcoming[0];
 
   return (
     <>
@@ -61,7 +68,7 @@ export default async function DashboardPage() {
                   actual={planned[key]}
                   target={toMacros(target)[key]}
                   tolerances={tolerances}
-                  showStatus={false}
+                  showStatus={todaysMeals.length > 0}
                 />
               ))
             ) : (
@@ -116,15 +123,46 @@ export default async function DashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <EmptyState
-              icon={CalendarDays}
-              title="Für diese Woche sind noch keine Mahlzeiten geplant."
-              action={
-                <Link href="/woche" className={buttonVariants()}>
-                  Erstes Rezept hinzufügen
+            {nextMeal ? (
+              <div className="grid gap-1">
+                <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                  {SLOT_LABELS[nextMeal.slot]}
+                </p>
+                <Link
+                  href={`/rezepte/${nextMeal.recipeId}`}
+                  className="text-lg font-semibold hover:underline"
+                >
+                  {nextMeal.recipeName}
                 </Link>
-              }
-            />
+                <p className="text-sm text-muted-foreground tabular-nums">
+                  {nextMeal.servings}× Portion · {formatKcal(mealNutrients(nextMeal).calories)} kcal
+                  · {formatGrams(mealNutrients(nextMeal).protein)} g Protein
+                </p>
+                {upcoming.length > 1 ? (
+                  <p className="text-sm text-muted-foreground">
+                    Danach heute:{" "}
+                    {upcoming
+                      .slice(1)
+                      .map((m) => m.recipeName)
+                      .join(", ")}
+                  </p>
+                ) : null}
+              </div>
+            ) : (
+              <EmptyState
+                icon={CalendarDays}
+                title={
+                  todaysMeals.length
+                    ? "Für heute ist nichts mehr offen."
+                    : "Für heute sind noch keine Mahlzeiten geplant."
+                }
+                action={
+                  <Link href="/woche" className={buttonVariants()}>
+                    Zum Wochenplan
+                  </Link>
+                }
+              />
+            )}
           </CardContent>
         </Card>
       </div>

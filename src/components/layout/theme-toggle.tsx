@@ -1,20 +1,21 @@
 "use client";
 
 import { Moon, Sun } from "lucide-react";
-import { useTheme } from "next-themes";
+import { useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
+import { applyTheme, currentTheme, subscribeTheme } from "@/lib/theme";
 
 export function ThemeToggle() {
-  const { resolvedTheme, setTheme } = useTheme();
-  const isDark = resolvedTheme === "dark";
+  // Server snapshot "light"; the icons below are switched by CSS, so there is no mismatch.
+  const theme = useSyncExternalStore(subscribeTheme, currentTheme, () => "light" as const);
+  const isDark = theme === "dark";
   return (
     <Button
       variant="ghost"
       size="icon"
-      onClick={() => setTheme(isDark ? "light" : "dark")}
+      onClick={() => applyTheme(isDark ? "light" : "dark")}
       aria-label={isDark ? "Helles Design aktivieren" : "Dunkles Design aktivieren"}
     >
-      {/* Both icons rendered; CSS picks the right one to avoid a hydration mismatch. */}
       <Sun className="hidden dark:block" aria-hidden />
       <Moon className="block dark:hidden" aria-hidden />
     </Button>

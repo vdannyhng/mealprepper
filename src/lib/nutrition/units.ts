@@ -1,4 +1,5 @@
 import type { Enums } from "@/types/database";
+import { formatNumber } from "@/lib/number-format";
 import { roundTo } from "./macros";
 
 export type FoodUnit = Enums<"food_unit">;
@@ -79,13 +80,11 @@ export function defaultUnit(food: UnitConversion): FoodUnit {
   return food.base_unit === "ml" ? "ml" : "g";
 }
 
-const amountFormat = new Intl.NumberFormat("de-CH", { maximumFractionDigits: 2 });
-
 /** "800 g", "1.5 Stück", "1.3 kg" – large gram/ml values are shown in kg/l. */
 export function formatQuantity(amount: number, unit: FoodUnit): string {
   if ((unit === "g" || unit === "ml") && amount >= 1000) {
-    return `${amountFormat.format(roundTo(amount / 1000, 2))} ${unit === "g" ? "kg" : "l"}`;
+    return `${formatNumber(amount / 1000, 2)} ${unit === "g" ? "kg" : "l"}`;
   }
   const rounded = unit === "g" || unit === "ml" ? Math.round(amount) : roundTo(amount, 2);
-  return `${amountFormat.format(rounded)} ${UNIT_LABELS[unit]}`;
+  return `${formatNumber(rounded, 2)} ${UNIT_LABELS[unit]}`;
 }

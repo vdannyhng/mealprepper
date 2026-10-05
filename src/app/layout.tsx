@@ -2,8 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import type { ReactNode } from "react";
 import { ServiceWorkerRegistration } from "@/components/layout/service-worker-registration";
-import { ThemeProvider } from "@/components/layout/theme-provider";
 import { publicEnv } from "@/lib/env";
+import { themeInitScript } from "@/lib/theme";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
@@ -29,8 +29,12 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="de" suppressHydrationWarning className={inter.variable}>
+      <head>
+        {/* Applies the theme before first paint to avoid a light/dark flash. */}
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className="min-h-dvh font-sans">
-        <ThemeProvider>{children}</ThemeProvider>
+        {children}
         <ServiceWorkerRegistration />
       </body>
     </html>

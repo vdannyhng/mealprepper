@@ -815,6 +815,10 @@ export type Database = {
         Args: Record<PropertyKey, never>;
         Returns: undefined;
       };
+      copy_planned_day: {
+        Args: { p_week_start: string; p_from: string; p_to: string[]; p_replace?: boolean };
+        Returns: number;
+      };
       save_recipe: {
         Args: { p_recipe: Json; p_ingredients: Json; p_recipe_id?: string };
         Returns: string;

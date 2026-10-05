@@ -1,0 +1,4 @@
+-- Development-only seed data.
+-- The global food catalog and example recipes live in
+-- migrations/20261005000003_global_catalog.sql so that production gets them too.
+-- Create local test users via the app's sign-up (emails are caught by Inbucket at :54324).

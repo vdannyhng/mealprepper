@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="de">
+  <body
+    style="
+      margin: 0;
+      padding: 24px;
+      background: #f4f7f5;
+      font-family: Arial, Helvetica, sans-serif;
+      color: #1c2a22;
+    "
+  >
+    <table
+      role="presentation"
+      width="100%"
+      cellspacing="0"
+      cellpadding="0"
+      style="
+        max-width: 480px;
+        margin: 0 auto;
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 32px;
+      "
+    >
+      <tr>
+        <td>
+          <p style="margin: 0 0 24px; font-size: 18px; font-weight: bold; color: #13804f">
+            MealPrepper
+          </p>
+          <h1 style="margin: 0 0 12px; font-size: 22px">Neue E-Mail-Adresse bestätigen</h1>
+          <p style="margin: 0 0 24px; font-size: 15px; line-height: 1.5">
+            Bestätige die Änderung deiner E-Mail-Adresse für MealPrepper auf {{ .NewEmail }}.
+          </p>
+          <p style="margin: 0 0 24px">
+            <a
+              href="{{ .ConfirmationURL }}"
+              style="
+                display: inline-block;
+                background: #13804f;
+                color: #ffffff;
+                text-decoration: none;
+                font-weight: bold;
+                padding: 12px 20px;
+                border-radius: 8px;
+              "
+              >Änderung bestätigen</a
+            >
+          </p>
+          <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #5b6b62">
+            Falls du das nicht angefordert hast, kannst du diese E-Mail ignorieren.
+          </p>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
